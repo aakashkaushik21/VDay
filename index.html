@@ -31,11 +31,8 @@ body{
   background: radial-gradient(circle at top, var(--bg2), var(--bg1));
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   color: var(--text);
-
-  /* IMPORTANT: allow vertical scrolling */
   overflow-y:auto;
   overflow-x:hidden;
-
   padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
 }
 
@@ -57,13 +54,9 @@ body{
   border-radius: 22px;
   box-shadow: 0 18px 60px rgba(0,0,0,.15);
   position: relative;
-
   max-height: calc(100svh - 32px);
-  overflow-x:hidden;
-  overflow-y:auto;
-  -webkit-overflow-scrolling: touch;
-
-  padding: clamp(18px, 3.6vw, 26px) clamp(16px, 3vw, 22px);
+  overflow:auto;
+  padding: clamp(18px, 3.6vw, 26px);
 }
 
 /* MUTE */
@@ -78,57 +71,36 @@ body{
   cursor:pointer;
   background:rgba(255,255,255,.9);
   box-shadow:0 6px 14px rgba(0,0,0,.15);
-  z-index: 10;
+  z-index:10;
 }
 
-/* SLIDE SYSTEM */
-.stage{ width:100%; overflow:hidden; }
-
+/* SLIDES */
+.stage{ overflow:hidden; }
 .pages{
   display:flex;
   width:200%;
   transition:transform .55s cubic-bezier(.2,.9,.2,1);
-  will-change: transform;
 }
-
-.card.show-yes .pages{
-  transform: translateX(-50%);
-}
-
-.page{
-  width:50%;
-  padding-bottom:20px;
-}
+.card.show-yes .pages{ transform:translateX(-50%); }
+.page{ width:50%; }
 
 /* ART */
 .art{
-  width:min(240px, 70vw);
+  width:min(240px,70vw);
   display:block;
-  margin:10px auto 6px;
+  margin:10px auto;
 }
 
-h1{
-  font-size:clamp(22px,5.5vw,44px);
-  line-height:1.15;
-  margin:6px 0 10px;
-  text-align:center;
-}
-
-.sub{
-  font-size:14px;
-  opacity:.75;
-  text-align:center;
-}
+/* TEXT */
+h1{ text-align:center; }
+.sub{ text-align:center; opacity:.75; }
 
 /* BUTTONS */
 .button-zone{
   position:relative;
-  width:min(520px,100%);
   height:160px;
-  margin:10px auto 0;
-  touch-action: none;
+  margin-top:10px;
 }
-
 .choice{
   position:absolute;
   top:50%;
@@ -140,78 +112,62 @@ h1{
   border:none;
   cursor:pointer;
   box-shadow:0 10px 24px rgba(0,0,0,.14);
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
 }
-
-#yesBtn{
-  left:10%;
-  background:var(--yes);
-  color:white;
-}
-#yesBtn:hover{ background: var(--yesHover); }
-
-#noBtn{
-  right:10%;
-  background:#e5e7eb;
-}
-
-/* Mobile stack */
-@media(max-width:420px){
-  .button-zone{ height:200px; }
-  #yesBtn{ left:50%; top:38%; transform:translate(-50%,-50%); }
-  #noBtn{ left:50%; top:68%; transform:translate(-50%,-50%); }
-}
-
-.hint{
-  margin-top:8px;
-  font-size:13px;
-  opacity:.75;
-  text-align:center;
-}
+#yesBtn{ left:10%; background:var(--yes); color:#fff; }
+#noBtn{ right:10%; background:#e5e7eb; }
 
 /* YES PAGE */
 .yes-title{
   font-size:clamp(26px,6.5vw,52px);
   margin-top:12px;
 }
-
-.yes-detail{
-  opacity:.8;
-  margin-bottom:10px;
-  text-align:center;
-}
-
-.chips{
-  display:flex;
-  gap:8px;
-  justify-content:center;
-  flex-wrap:wrap;
-  margin-bottom:12px;
-}
-
-.chip{
-  padding:8px 12px;
-  border-radius:999px;
-  background:rgba(255,255,255,.7);
-  font-weight:700;
-  font-size:13px;
-}
-
-/* GLOW */
 .glow{
   animation: glowPulse 900ms infinite;
-  text-shadow:0 0 14px rgba(255,59,122,.4);
+  text-shadow:0 0 18px rgba(255,59,122,.5);
+}
+@keyframes glowPulse{ 50%{ transform:scale(1.04); } }
+
+/* PHOTO */
+.memory-photo{
+  width:100%;
+  max-height:420px;
+  object-fit:cover;
+  border-radius:18px;
+  box-shadow:0 18px 50px rgba(0,0,0,.25);
+  animation: photoReveal .8s ease both, photoPulse 2.8s ease-in-out infinite;
+  cursor:pointer;
+}
+@keyframes photoReveal{
+  from{ opacity:0; transform:scale(.96) translateY(10px); }
+  to{ opacity:1; transform:scale(1) translateY(0); }
+}
+@keyframes photoPulse{
+  50%{ transform:scale(1.015); }
 }
 
-@keyframes glowPulse{
-  50%{ transform:scale(1.03); }
+/* MODAL */
+#modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.35);
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  z-index:9998;
 }
-
-/* SHORT SCREENS */
-@media(max-height:700px){
-  .art{ width:200px; }
-  .button-zone{ height:140px; }
+#modalContent{
+  background:#fff;
+  border-radius:18px;
+  padding:20px;
+  max-width:520px;
+  width:100%;
+  box-shadow:0 18px 60px rgba(0,0,0,.25);
+  animation: pop .35s ease;
+}
+@keyframes pop{
+  from{ transform:scale(.95); opacity:0; }
+  to{ transform:scale(1); opacity:1; }
 }
 </style>
 </head>
@@ -219,216 +175,101 @@ h1{
 <body>
 <canvas id="confettiCanvas"></canvas>
 
-<!-- IMPORTANT: don't use display:none on mobile for YouTube -->
-<div id="yt-player"
-     style="position:fixed; left:-9999px; top:-9999px; width:1px; height:1px; opacity:0; pointer-events:none;">
-</div>
+<div id="yt-player" style="position:fixed;left:-9999px;width:1px;height:1px;"></div>
 
 <main class="card" id="card">
-<button id="muteBtn" type="button" aria-label="Mute/unmute">🔇</button>
+<button id="muteBtn">🔇</button>
 
 <div class="stage">
-  <div class="pages">
+<div class="pages">
 
-    <!-- PAGE 1 -->
-    <section class="page">
-      <svg class="art" viewBox="0 0 320 240" aria-hidden="true">
-        <circle cx="160" cy="120" r="90" fill="#f2a97b"/>
-        <circle cx="140" cy="110" r="6"/>
-        <circle cx="180" cy="110" r="6"/>
-        <path d="M160 125 C155 135 165 135 160 145" fill="#ff7aa2"/>
-        <path d="M200 50 C200 30 230 30 230 50 C230 75 200 85 200 100" fill="#ff4d7d"/>
-      </svg>
-
-      <h1>Dr. Disha Sethi, will you be my valentine?</h1>
-      <p class="sub">Just one click… no pressure 😊</p>
-
-      <div class="button-zone" id="zone">
-        <button class="choice" id="yesBtn" type="button">Yes</button>
-        <button class="choice" id="noBtn" type="button">No</button>
-      </div>
-
-      <div class="hint" id="hint">“No” seems a bit shy 😈</div>
-    </section>
-
-    <!-- PAGE 2 -->
-    <section class="page">
-      <h1 class="yes-title" id="yesTitle">Wohooo! Dishu said YES 💖</h1>
-      <p class="yes-detail">
-        I love you Baby ❤️. Can't wait to celebrate Vday together in-person next year Jaan.
-        Till then see you on February 14th 2026, 9:00 PM IST on our screens 💻
-      </p>
-
-      <div class="chips">
-        <span class="chip">🎧 Endless Conversations and Laughters</span>
-        <span class="chip">💬 Movie Night</span>
-        <span class="chip">🍿 Yummy Food</span>
-      </div>
-
-      <img
-        src="https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif"
-        alt="Fireworks"
-        style="width:100%;border-radius:14px"
-      >
-    </section>
-
+<!-- PAGE 1 -->
+<section class="page">
+  <svg class="art" viewBox="0 0 320 240">
+    <circle cx="160" cy="120" r="90" fill="#f2a97b"/>
+  </svg>
+  <h1>Dr. Disha Sethi, will you be my Valentine?</h1>
+  <p class="sub">Just one click… no pressure 😊</p>
+  <div class="button-zone" id="zone">
+    <button class="choice" id="yesBtn">Yes</button>
+    <button class="choice" id="noBtn">No</button>
   </div>
+</section>
+
+<!-- PAGE 2 -->
+<section class="page">
+  <h1 class="yes-title" id="yesTitle">Wohooo! Dishu said YES 💖</h1>
+  <p class="sub">I love you baby. Today, tomorrow, always.</p>
+
+  <img src="us.jpeg" alt="Us ❤️" class="memory-photo" id="photo">
+
+  <p style="text-align:center;margin-top:10px;opacity:.8;">
+    Tap the photo 💌
+  </p>
+</section>
+
+</div>
 </div>
 </main>
 
+<!-- MODAL -->
+<div id="modal">
+  <div id="modalContent">
+    <h3>💖 For you, Dishu</h3>
+    <p>
+      One day, this won’t be on screens.  
+      It’ll be right in front of you.  
+      Until then… it’s always you. Always us.
+    </p>
+    <button onclick="modal.style.display='none'" style="margin-top:10px;">Close</button>
+  </div>
+</div>
+
 <script>
-const card = document.getElementById("card");
-const yesBtn = document.getElementById("yesBtn");
-const noBtn = document.getElementById("noBtn");
-const zone = document.getElementById("zone");
-const hint = document.getElementById("hint");
-const yesTitle = document.getElementById("yesTitle");
-const muteBtn = document.getElementById("muteBtn");
+/* CONFETTI */
+const confettiInstance = confetti.create(document.getElementById("confettiCanvas"),{resize:true});
 
-/* ---------- SMOOTH NO RUN AWAY (rAF throttled) ---------- */
-function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
-
-let lastX = 0, lastY = 0;
-let rafPending = false;
-
-function moveNoAway(pointerX, pointerY) {
-  const z = zone.getBoundingClientRect();
-  const b = noBtn.getBoundingClientRect();
-
-  const px = pointerX - z.left;
-  const py = pointerY - z.top;
-
-  const cx = (b.left - z.left) + b.width / 2;
-  const cy = (b.top - z.top) + b.height / 2;
-
-  let dx = cx - px;
-  let dy = cy - py;
-  const mag = Math.hypot(dx, dy) || 1;
-  dx /= mag; dy /= mag;
-
-  const isMobile = window.matchMedia("(max-width: 420px)").matches;
-  const step = isMobile ? 110 : 150;
-
-  let newLeft = (b.left - z.left) + dx * step;
-  let newTop  = (b.top  - z.top ) + dy * step;
-
-  newLeft = clamp(newLeft, 0, z.width - b.width);
-  newTop  = clamp(newTop,  0, z.height - b.height);
-
-  noBtn.style.right = "auto";      // prevent stretching
-  noBtn.style.left  = newLeft + "px";
-  noBtn.style.top   = newTop + "px";
-  noBtn.style.transform = "none";
-}
-
-zone.addEventListener("pointermove", (e) => {
-  lastX = e.clientX;
-  lastY = e.clientY;
-
-  if (rafPending) return;
-  rafPending = true;
-
-  requestAnimationFrame(() => {
-    rafPending = false;
-
-    const b = noBtn.getBoundingClientRect();
-    const d = Math.hypot(
-      (b.left + b.width / 2) - lastX,
-      (b.top + b.height / 2) - lastY
-    );
-
-    const threshold = window.matchMedia("(max-width: 420px)").matches ? 120 : 150;
-    if (d < threshold) moveNoAway(lastX, lastY);
-  });
-});
-
-noBtn.addEventListener("click", (e) => e.preventDefault());
-noBtn.addEventListener("pointerdown", (e) => {
-  moveNoAway(e.clientX, e.clientY);
-  e.preventDefault();
-});
-
-/* ---------- CONFETTI ---------- */
-const confettiCanvas = document.getElementById("confettiCanvas");
-const confettiInstance = confetti.create(confettiCanvas, { resize: true, useWorker: true });
-
-/* ---------- YOUTUBE MUSIC ---------- */
-let player = null;
-let muted = true;
-
-const VIDEO_ID = "KtlgYxa6BMU"; // Lord Huron - The Night We Met (Official Audio)
-const CHORUS_START = 48;
-const TARGET_VOL = 60;
-
-function setMuteIcon() {
-  muteBtn.textContent = muted ? "🔇" : "🔊";
-}
-setMuteIcon();
-
-function onYouTubeIframeAPIReady(){
-  player = new YT.Player("yt-player", {
-    videoId: VIDEO_ID,
-    playerVars: {
-      start: CHORUS_START,
-      autoplay: 0,
-      controls: 0,
-      playsinline: 1,
-      rel: 0,
-      modestbranding: 1
-    },
-    events: {
-      onReady: () => {
-        try { player.setVolume(0); } catch (_) {}
-      }
-    }
-  });
-}
-window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
-
-let fadeTimer = null;
-function fadeInVolume() {
-  if (!player) return;
-  clearInterval(fadeTimer);
-  let v = 0;
-  try { player.setVolume(0); } catch (_) {}
-
-  fadeTimer = setInterval(() => {
-    v += 5;
-    if (v >= TARGET_VOL) { v = TARGET_VOL; clearInterval(fadeTimer); }
-    try { player.setVolume(v); } catch (_) {}
-  }, 120);
-}
-
-/* ---------- YES CLICK ---------- */
-yesBtn.onclick = () => {
-  card.classList.add("show-yes");
-  zone.style.display = "none";
-  hint.style.display = "none";
-
-  // Start YouTube ONLY from this user gesture (mobile-safe)
-  if (player && typeof player.playVideo === "function") {
-    try {
-      player.seekTo(CHORUS_START, true);
-      player.playVideo();
-      muted = false;
-      setMuteIcon();
-      yesTitle.classList.add("glow");
-      fadeInVolume();
-    } catch (_) {}
+/* NO BUTTON RUN */
+const noBtn=document.getElementById("noBtn");
+const zone=document.getElementById("zone");
+zone.addEventListener("pointermove",e=>{
+  const r=noBtn.getBoundingClientRect();
+  if(Math.hypot(r.x-e.clientX,r.y-e.clientY)<120){
+    noBtn.style.left=Math.random()*60+"%";
+    noBtn.style.top=Math.random()*60+"%";
   }
+});
 
-  confettiInstance({ particleCount: 220, spread: 130, startVelocity: 45, origin: { x: 0.5, y: 0.55 } });
+/* MUSIC */
+let player, muted=true;
+function onYouTubeIframeAPIReady(){
+  player=new YT.Player("yt-player",{videoId:"KtlgYxa6BMU",playerVars:{start:48}});
+}
+window.onYouTubeIframeAPIReady=onYouTubeIframeAPIReady;
+
+/* YES */
+document.getElementById("yesBtn").onclick=()=>{
+  card.classList.add("show-yes");
+  player.playVideo();
+  player.setVolume(60);
+  muted=false;
+  document.getElementById("yesTitle").classList.add("glow");
+
+  confettiInstance({particleCount:200,spread:140});
 };
 
-muteBtn.onclick = () => {
-  if (!player) return;
-  muted = !muted;
+/* MUTE */
+document.getElementById("muteBtn").onclick=()=>{
+  muted=!muted;
+  player.setVolume(muted?0:60);
+};
 
-  try { player.setVolume(muted ? 0 : TARGET_VOL); } catch (_) {}
-  yesTitle.classList.toggle("glow", !muted);
-  setMuteIcon();
+/* PHOTO TAP */
+const modal=document.getElementById("modal");
+document.getElementById("photo").onclick=()=>{
+  modal.style.display="flex";
+  confettiInstance({particleCount:60,spread:100,origin:{y:.6}});
 };
 </script>
 </body>
 </html>
-
