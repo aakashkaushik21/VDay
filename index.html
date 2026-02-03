@@ -1,133 +1,443 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Will you be my Valentine?</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Will you be my Valentine?</title>
 
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <!-- Confetti library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
-<style>
-:root{
-  --bg1:#ffd6e7;
-  --bg2:#ffeef6;
-  --card:#ffffffcc;
-  --yes:#ff3b7a;
-  --yesHover:#ff1f68;
-}
+  <!-- YouTube IFrame API (required for autoplay-on-click + volume fade) -->
+  <script src="https://www.youtube.com/iframe_api"></script>
 
-*{ box-sizing:border-box; }
+  <style>
+    :root{
+      --bg1:#ffd6e7;
+      --bg2:#ffeef6;
+      --card:#ffffffcc;
+      --yes:#ff3b7a;
+      --yesHover:#ff1f68;
+    }
 
-body{
-  margin:0;
-  min-height:100svh; /* modern mobile viewport */
-  display:grid;
-  place-items:center;
-  background: radial-gradient(circle at top, var(--bg2), var(--bg1));
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  overflow:hidden;
-  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
-}
+    *{ box-sizing:border-box; }
 
-/* FULL-SCREEN CONFETTI CANVAS */
-#confettiCanvas{
-  position:fixed;
-  inset:0;
-  width:100vw;
-  height:100vh;
-  pointer-events:none;
-  z-index:9999;
-}
+    body{
+      margin:0;
+      min-height:100svh;
+      display:grid;
+      place-items:center;
+      background: radial-gradient(circle at top, var(--bg2), var(--bg1));
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      overflow:hidden;
+      padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+    }
 
-.card{
-  width:min(720px, 92vw);
-  padding: clamp(18px, 3.6vw, 26px) clamp(16px, 3vw, 22px);
-  background: var(--card);
-  backdrop-filter: blur(10px);
-  border-radius: 22px;
-  text-align:center;
-  box-shadow: 0 18px 60px rgba(0,0,0,.15);
-}
+    /* FULL-SCREEN CONFETTI CANVAS */
+    #confettiCanvas{
+      position:fixed;
+      inset:0;
+      width:100vw;
+      height:100vh;
+      pointer-events:none;
+      z-index:9999;
+    }
 
-.art{
-  width: min(240px, 68vw);
-  margin: 0 auto 10px;
-  display:block;
-  filter: drop-shadow(0 10px 14px rgba(0,0,0,.12));
-}
+    .card{
+      width:min(720px, 92vw);
+      padding: clamp(18px, 3.6vw, 26px) clamp(16px, 3vw, 22px);
+      background: var(--card);
+      backdrop-filter: blur(10px);
+      border-radius: 22px;
+      text-align:center;
+      box-shadow: 0 18px 60px rgba(0,0,0,.15);
+      position: relative;
+    }
 
-h1{
-  font-size: clamp(22px, 5.4vw, 44px);
-  line-height: 1.1;
-  margin: 12px 0 16px;
-  padding: 0 6px;
-}
+    .art{
+      width: min(240px, 68vw);
+      margin: 8px auto 10px;
+      display:block;
+      filter: drop-shadow(0 10px 14px rgba(0,0,0,.12));
+    }
 
-/* Button zone becomes responsive */
-.button-zone{
-  position: relative;
-  width: min(560px, 100%);
-  height: clamp(140px, 22vh, 180px);
-  margin: 0 auto;
-  touch-action: none;
-}
+    h1{
+      font-size: clamp(22px, 5.4vw, 44px);
+      line-height: 1.12;
+      margin: 10px 0 16px;
+      padding: 0 6px;
+    }
 
-/* Buttons are bigger + safer on mobile */
-button{
-  position:absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 16px 22px;
-  min-width: 120px;
-  font-size: 18px;
-  font-weight: 800;
-  border-radius: 999px;
-  border:none;
-  cursor:pointer;
-  box-shadow: 0 10px 24px rgba(0,0,0,.14);
-  user-select:none;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform .12s ease, background .12s ease;
-  touch-action: manipulation; /* helps on mobile */
-}
+    .button-zone{
+      position:relative;
+      width: min(560px, 100%);
+      height: clamp(140px, 22vh, 180px);
+      margin: 0 auto;
+      touch-action:none;
+    }
 
-#yesBtn{
-  left: 10%;
-  background: var(--yes);
-  color:#fff;
-}
-#yesBtn:hover{ background: var(--yesHover); }
+    button.choice{
+      position:absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 16px 22px;
+      min-width: 120px;
+      font-size: 18px;
+      font-weight: 800;
+      border-radius: 999px;
+      border:none;
+      cursor:pointer;
+      box-shadow: 0 10px 24px rgba(0,0,0,.14);
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform .12s ease, background .12s ease;
+      touch-action: manipulation;
+    }
 
-#noBtn{
-  right: 10%;
-  left: auto;
-  background:#e5e7eb;
-  color:#111827;
-}
+    #yesBtn{
+      left: 10%;
+      background: var(--yes);
+      color:#fff;
+    }
+    #yesBtn:hover{ background: var(--yesHover); }
 
-/* On very small screens, stack vertically so they never clash */
-@media (max-width: 420px){
-  .button-zone{ height: 200px; }
-  #yesBtn{
-    left: 50%;
-    top: 40%;
-    transform: translate(-50%, -50%);
-  }
-  #noBtn{
-    right: auto;
-    left: 50%;
-    top: 68%;
-    transform: translate(-50%, -50%);
-  }
-}
+    #noBtn{
+      right: 10%;
+      left:auto;
+      background:#e5e7eb;
+      color:#111827;
+    }
 
-.hint{
-  margin-top: 10px;
-  font-size: 13px;
-  opacity: .75;
-}
+    /* small phones: stack vertically so nothing overlaps */
+    @media (max-width: 420px){
+      .button-zone{ height: 200px; }
+      #yesBtn{
+        left: 50%;
+        top: 40%;
+        transform: translate(-50%, -50%);
+      }
+      #noBtn{
+        right: auto;
+        left: 50%;
+        top: 68%;
+        transform: translate(-50%, -50%);
+      }
+    }
 
-.result{
-  display:none;
-  margin-top: 18px;
- 
+    .hint{
+      margin-top: 10px;
+      font-size: 13px;
+      opacity: .75;
+    }
+
+    .result{
+      display:none;
+      margin-top: 18px;
+      animation: pop .35s ease;
+    }
+
+    .result h2{
+      font-size: clamp(22px, 5vw, 40px);
+      margin: 10px 0;
+      line-height: 1.2;
+    }
+
+    .fireworks{
+      width: min(380px, 90vw);
+      margin: 0 auto;
+      display:block;
+      border-radius: 14px;
+    }
+
+    @keyframes pop{
+      from{ transform: scale(.96); opacity:0; }
+      to{ transform: scale(1); opacity:1; }
+    }
+
+    /* Minimal mute button */
+    #muteBtn{
+      position:absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(255,255,255,0.9);
+      border:none;
+      border-radius:999px;
+      padding: 10px 12px;
+      font-size: 18px;
+      cursor:pointer;
+      box-shadow: 0 6px 14px rgba(0,0,0,.15);
+      line-height: 1;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- Hidden YouTube player container (audio-only effect) -->
+  <div id="yt-player" style="position:fixed; left:-9999px; top:-9999px; width:1px; height:1px; opacity:0;"></div>
+
+  <main class="card">
+    <button id="muteBtn" type="button" aria-label="Mute/unmute">🔇</button>
+
+    <!-- ANIMAL WITH HEART -->
+    <svg class="art" viewBox="0 0 320 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="fur" x1="0" x2="1">
+          <stop offset="0" stop-color="#f7c7a1"/>
+          <stop offset="1" stop-color="#f2a97b"/>
+        </linearGradient>
+        <linearGradient id="heart" x1="0" x2="1">
+          <stop offset="0" stop-color="#ff4d7d"/>
+          <stop offset="1" stop-color="#ff1f68"/>
+        </linearGradient>
+      </defs>
+
+      <path d="M250 50 C250 33 270 25 282 38
+        C294 25 314 33 314 50
+        C314 78 282 92 282 106
+        C282 92 250 78 250 50Z"
+        fill="url(#heart)"/>
+
+      <path d="M90 120 C90 70 140 40 190 60
+        C240 40 290 70 290 120
+        C290 180 240 210 190 210
+        C140 210 90 180 90 120Z"
+        fill="url(#fur)"/>
+
+      <path d="M110 92 L95 55 L140 78 Z" fill="#f2a97b"/>
+      <path d="M270 92 L285 55 L240 78 Z" fill="#f2a97b"/>
+
+      <circle cx="160" cy="130" r="8"/>
+      <circle cx="220" cy="130" r="8"/>
+
+      <path d="M190 144 C186 144 182 148 182 152
+        C182 160 190 164 190 170
+        C190 164 198 160 198 152
+        C198 148 194 144 190 144Z"
+        fill="#ff7aa2"/>
+    </svg>
+
+    <h1>Dr. Disha Sethi, will you be my valentine?</h1>
+
+    <section class="button-zone" id="zone" aria-label="Valentine buttons">
+      <button class="choice" id="yesBtn" type="button">Yes</button>
+      <button class="choice" id="noBtn" type="button">No</button>
+    </section>
+
+    <div class="hint" id="hint">“No” seems a bit shy 😈</div>
+
+    <section class="result" id="result">
+      <h2>Wohooo! Let's go... February 14th, 9PM IST, our computer screens :D &lt;3 🎉</h2>
+      <img
+        class="fireworks"
+        src="https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif"
+        alt="Fireworks"
+      />
+    </section>
+  </main>
+
+  <script>
+    const zone = document.getElementById("zone");
+    const yesBtn = document.getElementById("yesBtn");
+    const noBtn = document.getElementById("noBtn");
+    const result = document.getElementById("result");
+    const hint = document.getElementById("hint");
+    const muteBtn = document.getElementById("muteBtn");
+
+    /* ---------- CONFETTI ---------- */
+    const confettiCanvas = document.getElementById("confettiCanvas");
+
+    function resizeConfettiCanvas() {
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      confettiCanvas.width = Math.floor(window.innerWidth * dpr);
+      confettiCanvas.height = Math.floor(window.innerHeight * dpr);
+      confettiCanvas.style.width = "100vw";
+      confettiCanvas.style.height = "100vh";
+    }
+
+    resizeConfettiCanvas();
+    window.addEventListener("resize", resizeConfettiCanvas);
+    window.addEventListener("orientationchange", () => setTimeout(resizeConfettiCanvas, 200));
+
+    const confettiInstance = (window.confetti && window.confetti.create)
+      ? window.confetti.create(confettiCanvas, { resize: false, useWorker: true })
+      : null;
+
+    function fullScreenConfetti() {
+      if (!confettiInstance) return;
+
+      const end = Date.now() + 1600;
+
+      (function frame() {
+        confettiInstance({
+          particleCount: 12,
+          spread: 90,
+          startVelocity: 45,
+          ticks: 180,
+          origin: { x: Math.random(), y: Math.random() * 0.35 }
+        });
+        if (Date.now() < end) requestAnimationFrame(frame);
+      })();
+
+      setTimeout(() => {
+        confettiInstance({
+          particleCount: 260,
+          spread: 140,
+          startVelocity: 60,
+          ticks: 220,
+          origin: { x: 0.5, y: 0.55 }
+        });
+      }, 280);
+    }
+
+    /* ---------- YES BUTTON GROWS ---------- */
+    let yesScale = 1;
+    function growYes() {
+      yesScale = Math.min(2.1, yesScale + 0.08);
+
+      if (window.matchMedia("(max-width: 420px)").matches) {
+        yesBtn.style.transform = `translate(-50%, -50%) scale(${yesScale})`;
+      } else {
+        yesBtn.style.transform = `translateY(-50%) scale(${yesScale})`;
+      }
+    }
+
+    /* ---------- NO BUTTON RUNS AWAY ---------- */
+    function clamp(n, min, max) {
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function moveNo(px, py) {
+      const z = zone.getBoundingClientRect();
+      const b = noBtn.getBoundingClientRect();
+
+      let dx = (b.left + b.width / 2) - px;
+      let dy = (b.top + b.height / 2) - py;
+      let mag = Math.hypot(dx, dy) || 1;
+      dx /= mag;
+      dy /= mag;
+
+      const step = window.matchMedia("(max-width: 420px)").matches ? 120 : 150;
+
+      let newLeft = (b.left - z.left) + dx * step;
+      let newTop  = (b.top  - z.top ) + dy * step;
+
+      newLeft = clamp(newLeft, 0, z.width - b.width);
+      newTop  = clamp(newTop,  0, z.height - b.height);
+
+      noBtn.style.left = newLeft + "px";
+      noBtn.style.top  = newTop + "px";
+      noBtn.style.right = "auto";
+      noBtn.style.transform = "none";
+
+      growYes();
+    }
+
+    zone.addEventListener("pointermove", e => {
+      const b = noBtn.getBoundingClientRect();
+      const d = Math.hypot(
+        (b.left + b.width / 2) - e.clientX,
+        (b.top  + b.height / 2) - e.clientY
+      );
+      const threshold = window.matchMedia("(max-width: 420px)").matches ? 110 : 140;
+      if (d < threshold) moveNo(e.clientX, e.clientY);
+    });
+
+    noBtn.addEventListener("pointerdown", e => {
+      moveNo(e.clientX, e.clientY);
+      e.preventDefault();
+    });
+    noBtn.addEventListener("click", e => e.preventDefault());
+
+    /* ---------- YOUTUBE MUSIC (chorus start + fade in) ---------- */
+    let player;
+    let fadeInterval;
+    let ytReady = false;
+    let ytStarted = false;
+    let ytMuted = true;
+
+    const VIDEO_ID = "KtlgYxa6BMU";  // Lord Huron - The Night We Met (Official Audio)
+    const CHORUS_START = 48;         // seconds
+    const TARGET_VOLUME = 60;        // 0..100
+
+    function setMuteIcon() {
+      muteBtn.textContent = (ytStarted && !ytMuted) ? "🔊" : "🔇";
+    }
+    setMuteIcon();
+
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player("yt-player", {
+        height: "0",
+        width: "0",
+        videoId: VIDEO_ID,
+        playerVars: {
+          autoplay: 0,
+          controls: 0,
+          start: CHORUS_START,
+          modestbranding: 1,
+          rel: 0
+        },
+        events: {
+          onReady: () => {
+            ytReady = true;
+            // Start muted at 0 volume (safe)
+            player.setVolume(0);
+          }
+        }
+      });
+    }
+
+    function fadeInYouTube() {
+      if (!player) return;
+      clearInterval(fadeInterval);
+
+      let vol = 0;
+      player.setVolume(0);
+
+      fadeInterval = setInterval(() => {
+        vol += 5;
+        if (vol >= TARGET_VOLUME) {
+          vol = TARGET_VOLUME;
+          clearInterval(fadeInterval);
+        }
+        player.setVolume(vol);
+      }, 120);
+    }
+
+    function startYouTubeMusic() {
+      if (!ytReady || !player) return;
+
+      // Must be called from a user gesture (YES click)
+      player.seekTo(CHORUS_START, true);
+      player.playVideo();
+
+      ytStarted = true;
+      ytMuted = false;
+      setMuteIcon();
+      fadeInYouTube();
+    }
+
+    muteBtn.addEventListener("click", () => {
+      if (!player || !ytStarted) return;
+
+      ytMuted = !ytMuted;
+      player.setVolume(ytMuted ? 0 : TARGET_VOLUME);
+      setMuteIcon();
+    });
+
+    /* ---------- YES CLICK ---------- */
+    yesBtn.addEventListener("click", () => {
+      zone.style.display = "none";
+      hint.style.display = "none";
+      result.style.display = "block";
+
+      resizeConfettiCanvas();
+
+      // Start music first (chorus + fade-in), then confetti for drama
+      startYouTubeMusic();
+      setTimeout(() => fullScreenConfetti(), 400);
+    });
+  </script>
+</body>
+</html>
