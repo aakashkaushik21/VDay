@@ -54,7 +54,10 @@
       text-align:center;
       box-shadow: 0 18px 60px rgba(0,0,0,.15);
       position: relative;
-      overflow: hidden; /* needed for slide transition */
+
+      /* Prevent clipping on short screens */
+      max-height: calc(100svh - 32px);
+      overflow: hidden; /* needed for slide */
     }
 
     /* Mute button */
@@ -73,33 +76,37 @@
       z-index: 10;
     }
 
-    /* --- SLIDE PAGES --- */
+    /* Stage holds the sliding strip */
     .stage{
-      position: relative;
       width: 100%;
-      min-height: 420px;
+      height: 100%;
+      overflow: hidden;
     }
 
-    .page{
-      position: absolute;
-      inset: 0;
-      padding-top: 8px;
-      display: grid;
-      grid-auto-rows: min-content;
-      align-content: start;
-      justify-items: center;
-      gap: 8px;
-      transition: transform 520ms cubic-bezier(.2,.9,.2,1), opacity 420ms ease;
+    /* Sliding strip */
+    .pages{
+      display: flex;
+      width: 200%;
+      transform: translateX(0%);
+      transition: transform 520ms cubic-bezier(.2,.9,.2,1);
       will-change: transform;
     }
+    .card.show-yes .pages{
+      transform: translateX(-50%);
+    }
 
-    /* initial positions */
-    #questionPage{ transform: translateX(0%); opacity: 1; }
-    #yesPage{ transform: translateX(110%); opacity: 1; }
+    /* Each page takes full width */
+    .page{
+      flex: 0 0 50%;
+      width: 50%;
+      padding-top: 6px;
 
-    /* when active */
-    .card.show-yes #questionPage{ transform: translateX(-110%); opacity: .98; }
-    .card.show-yes #yesPage{ transform: translateX(0%); opacity: 1; }
+      /* Allow vertical scroll inside card if content is tall */
+      max-height: calc(100svh - 32px);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 16px;
+    }
 
     /* Art */
     .art{
@@ -165,7 +172,6 @@
 
     /* small phones: stack vertically so nothing overlaps */
     @media (max-width: 420px){
-      .stage{ min-height: 460px; }
       .button-zone{ height: 200px; }
       #yesBtn{
         left: 50%;
@@ -189,7 +195,7 @@
     /* YES PAGE */
     .yes-title{
       font-size: clamp(26px, 6.2vw, 52px);
-      margin: 6px 0 2px;
+      margin: 8px 0 2px;
       letter-spacing: .2px;
     }
 
@@ -218,7 +224,7 @@
 
     .fireworks{
       width: min(420px, 92vw);
-      margin: 2px auto 0;
+      margin: 6px auto 0;
       display:block;
       border-radius: 14px;
       box-shadow: 0 12px 30px rgba(0,0,0,.12);
@@ -251,75 +257,76 @@
     <button id="muteBtn" type="button" aria-label="Mute/unmute">🔇</button>
 
     <div class="stage">
-      <!-- PAGE 1: QUESTION -->
-      <section class="page" id="questionPage" aria-label="Question page">
-        <!-- ANIMAL WITH HEART -->
-        <svg class="art" viewBox="0 0 320 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <linearGradient id="fur" x1="0" x2="1">
-              <stop offset="0" stop-color="#f7c7a1"/>
-              <stop offset="1" stop-color="#f2a97b"/>
-            </linearGradient>
-            <linearGradient id="heart" x1="0" x2="1">
-              <stop offset="0" stop-color="#ff4d7d"/>
-              <stop offset="1" stop-color="#ff1f68"/>
-            </linearGradient>
-          </defs>
+      <div class="pages" id="pages">
+        <!-- PAGE 1 -->
+        <section class="page" id="questionPage" aria-label="Question page">
+          <!-- ANIMAL WITH HEART -->
+          <svg class="art" viewBox="0 0 320 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="fur" x1="0" x2="1">
+                <stop offset="0" stop-color="#f7c7a1"/>
+                <stop offset="1" stop-color="#f2a97b"/>
+              </linearGradient>
+              <linearGradient id="heart" x1="0" x2="1">
+                <stop offset="0" stop-color="#ff4d7d"/>
+                <stop offset="1" stop-color="#ff1f68"/>
+              </linearGradient>
+            </defs>
 
-          <path d="M250 50 C250 33 270 25 282 38
-            C294 25 314 33 314 50
-            C314 78 282 92 282 106
-            C282 92 250 78 250 50Z"
-            fill="url(#heart)"/>
+            <path d="M250 50 C250 33 270 25 282 38
+              C294 25 314 33 314 50
+              C314 78 282 92 282 106
+              C282 92 250 78 250 50Z"
+              fill="url(#heart)"/>
 
-          <path d="M90 120 C90 70 140 40 190 60
-            C240 40 290 70 290 120
-            C290 180 240 210 190 210
-            C140 210 90 180 90 120Z"
-            fill="url(#fur)"/>
+            <path d="M90 120 C90 70 140 40 190 60
+              C240 40 290 70 290 120
+              C290 180 240 210 190 210
+              C140 210 90 180 90 120Z"
+              fill="url(#fur)"/>
 
-          <path d="M110 92 L95 55 L140 78 Z" fill="#f2a97b"/>
-          <path d="M270 92 L285 55 L240 78 Z" fill="#f2a97b"/>
+            <path d="M110 92 L95 55 L140 78 Z" fill="#f2a97b"/>
+            <path d="M270 92 L285 55 L240 78 Z" fill="#f2a97b"/>
 
-          <circle cx="160" cy="130" r="8"/>
-          <circle cx="220" cy="130" r="8"/>
+            <circle cx="160" cy="130" r="8"/>
+            <circle cx="220" cy="130" r="8"/>
 
-          <path d="M190 144 C186 144 182 148 182 152
-            C182 160 190 164 190 170
-            C190 164 198 160 198 152
-            C198 148 194 144 190 144Z"
-            fill="#ff7aa2"/>
-        </svg>
+            <path d="M190 144 C186 144 182 148 182 152
+              C182 160 190 164 190 170
+              C190 164 198 160 198 152
+              C198 148 194 144 190 144Z"
+              fill="#ff7aa2"/>
+          </svg>
 
-        <h1>Dr. Disha Sethi, will you be my valentine?</h1>
-        <p class="sub">Just one click… no pressure 😌</p>
+          <h1 id="questionTitle">Dr. Disha Sethi, will you be my valentine?</h1>
+          <p class="sub">Just one click… no pressure 😌</p>
 
-        <section class="button-zone" id="zone" aria-label="Valentine buttons">
-          <button class="choice" id="yesBtn" type="button">Yes</button>
-          <button class="choice" id="noBtn" type="button">No</button>
+          <section class="button-zone" id="zone" aria-label="Valentine buttons">
+            <button class="choice" id="yesBtn" type="button">Yes</button>
+            <button class="choice" id="noBtn" type="button">No</button>
+          </section>
+
+          <div class="hint" id="hint">“No” seems a bit shy 😈</div>
         </section>
 
-        <div class="hint" id="hint">“No” seems a bit shy 😈</div>
-      </section>
+        <!-- PAGE 2 -->
+        <section class="page" id="yesPage" aria-label="Yes page">
+          <h1 class="yes-title" id="yesTitle">She said YES 💖</h1>
+          <p class="yes-detail">February 14th • 9:00 PM IST • our computer screens :D</p>
 
-      <!-- PAGE 2: YES -->
-      <section class="page" id="yesPage" aria-label="Yes page">
-        <div style="height:6px"></div>
-        <h1 class="yes-title" id="yesTitle">She said YES 💖</h1>
-        <p class="yes-detail">February 14th • 9:00 PM IST • our computer screens :D</p>
+          <div class="chips" aria-label="Plan chips">
+            <span class="chip">🎧 Endless Conversations</span>
+            <span class="chip">💬 Movie Night</span>
+            <span class="chip">🍿 Something yummy to eat</span>
+          </div>
 
-        <div class="chips" aria-label="Plan chips">
-          <span class="chip">🎧 The Night We Met</span>
-          <span class="chip">💬 Video call date</span>
-          <span class="chip">🍿 Snacks ready</span>
-        </div>
-
-        <img
-          class="fireworks"
-          src="https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif"
-          alt="Fireworks"
-        />
-      </section>
+          <img
+            class="fireworks"
+            src="https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif"
+            alt="Fireworks"
+          />
+        </section>
+      </div>
     </div>
   </main>
 
@@ -453,7 +460,6 @@
     }
     setMuteIcon();
 
-    // REQUIRED global callback for YouTube API
     function onYouTubeIframeAPIReady() {
       player = new YT.Player("yt-player", {
         height: "0",
@@ -504,9 +510,7 @@
         ytMuted = false;
         setMuteIcon();
 
-        // start glow synced to music start
         yesTitle.classList.add("glow");
-
         fadeInYouTube();
       } catch (_) {}
     }
@@ -517,7 +521,6 @@
 
       try { player.setVolume(ytMuted ? 0 : TARGET_VOLUME); } catch (_) {}
 
-      // keep glow only when unmuted (feels "synced")
       if (ytMuted) yesTitle.classList.remove("glow");
       else yesTitle.classList.add("glow");
 
@@ -526,14 +529,14 @@
 
     /* ---------- YES CLICK (transition + music + confetti) ---------- */
     yesBtn.addEventListener("click", () => {
-      // slide to page 2
+      // slide to yes page
       card.classList.add("show-yes");
 
-      // stop interactions on old page
+      // disable old page controls
       zone.style.display = "none";
       hint.style.display = "none";
 
-      // start music first, then confetti slightly later
+      // start music + confetti
       resizeConfettiCanvas();
       startYouTubeMusic();
       setTimeout(() => fullScreenConfetti(), 420);
