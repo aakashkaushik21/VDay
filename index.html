@@ -78,6 +78,7 @@ body{
   cursor:pointer;
   background:rgba(255,255,255,.9);
   box-shadow:0 6px 14px rgba(0,0,0,.15);
+  z-index: 10;
 }
 
 /* SLIDE SYSTEM */
@@ -87,6 +88,7 @@ body{
   display:flex;
   width:200%;
   transition:transform .55s cubic-bezier(.2,.9,.2,1);
+  will-change: transform;
 }
 
 .card.show-yes .pages{
@@ -124,6 +126,7 @@ h1{
   width:min(520px,100%);
   height:160px;
   margin:10px auto 0;
+  touch-action: none;
 }
 
 .choice{
@@ -137,6 +140,8 @@ h1{
   border:none;
   cursor:pointer;
   box-shadow:0 10px 24px rgba(0,0,0,.14);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 #yesBtn{
@@ -144,6 +149,7 @@ h1{
   background:var(--yes);
   color:white;
 }
+#yesBtn:hover{ background: var(--yesHover); }
 
 #noBtn{
   right:10%;
@@ -212,50 +218,61 @@ h1{
 
 <body>
 <canvas id="confettiCanvas"></canvas>
-<div id="yt-player" style="display:none"></div>
+
+<!-- IMPORTANT: don't use display:none on mobile for YouTube -->
+<div id="yt-player"
+     style="position:fixed; left:-9999px; top:-9999px; width:1px; height:1px; opacity:0; pointer-events:none;">
+</div>
 
 <main class="card" id="card">
-<button id="muteBtn">🔇</button>
+<button id="muteBtn" type="button" aria-label="Mute/unmute">🔇</button>
 
 <div class="stage">
-<div class="pages">
+  <div class="pages">
 
-<!-- PAGE 1 -->
-<section class="page">
-<svg class="art" viewBox="0 0 320 240">
-<circle cx="160" cy="120" r="90" fill="#f2a97b"/>
-<circle cx="140" cy="110" r="6"/>
-<circle cx="180" cy="110" r="6"/>
-<path d="M160 125 C155 135 165 135 160 145" fill="#ff7aa2"/>
-<path d="M200 50 C200 30 230 30 230 50 C230 75 200 85 200 100" fill="#ff4d7d"/>
-</svg>
+    <!-- PAGE 1 -->
+    <section class="page">
+      <svg class="art" viewBox="0 0 320 240" aria-hidden="true">
+        <circle cx="160" cy="120" r="90" fill="#f2a97b"/>
+        <circle cx="140" cy="110" r="6"/>
+        <circle cx="180" cy="110" r="6"/>
+        <path d="M160 125 C155 135 165 135 160 145" fill="#ff7aa2"/>
+        <path d="M200 50 C200 30 230 30 230 50 C230 75 200 85 200 100" fill="#ff4d7d"/>
+      </svg>
 
-<h1>Dr. Disha Sethi, will you be my valentine?</h1>
-<p class="sub">Just one click… no pressure 😊</p>
+      <h1>Dr. Disha Sethi, will you be my valentine?</h1>
+      <p class="sub">Just one click… no pressure 😊</p>
 
-<div class="button-zone" id="zone">
-<button class="choice" id="yesBtn">Yes</button>
-<button class="choice" id="noBtn">No</button>
-</div>
+      <div class="button-zone" id="zone">
+        <button class="choice" id="yesBtn" type="button">Yes</button>
+        <button class="choice" id="noBtn" type="button">No</button>
+      </div>
 
-<div class="hint" id="hint">“No” seems a bit shy 😈</div>
-</section>
+      <div class="hint" id="hint">“No” seems a bit shy 😈</div>
+    </section>
 
-<!-- PAGE 2 -->
-<section class="page">
-<h1 class="yes-title" id="yesTitle"> Wohooo! Dishu said YES 💖</h1>
-<p class="yes-detail">Can't wait to celebrate it together in person next year Jaan. Till then February 14th 2026, 9:00 PM IST on our screens 💻</p>
+    <!-- PAGE 2 -->
+    <section class="page">
+      <h1 class="yes-title" id="yesTitle">Wohooo! Dishu said YES 💖</h1>
+      <p class="yes-detail">
+        Can't wait to celebrate it together in person next year Jaan.
+        Till then February 14th 2026, 9:00 PM IST on our screens 💻
+      </p>
 
-<div class="chips">
-<span class="chip">🎧 Endless Conversations</span>
-<span class="chip">💬 Movie Night</span>
-<span class="chip">🍿 Yummy Food</span>
-</div>
+      <div class="chips">
+        <span class="chip">🎧 Endless Conversations</span>
+        <span class="chip">💬 Movie Night</span>
+        <span class="chip">🍿 Yummy Food</span>
+      </div>
 
-<img src="https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif" style="width:100%;border-radius:14px">
-</section>
+      <img
+        src="https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif"
+        alt="Fireworks"
+        style="width:100%;border-radius:14px"
+      >
+    </section>
 
-</div>
+  </div>
 </div>
 </main>
 
@@ -268,104 +285,149 @@ const hint = document.getElementById("hint");
 const yesTitle = document.getElementById("yesTitle");
 const muteBtn = document.getElementById("muteBtn");
 
-/* NO RUN AWAY */
-/* NO RUN AWAY (proper + no stretching) */
-function clamp(n, min, max) {
-  return Math.max(min, Math.min(max, n));
-}
+/* ---------- SMOOTH NO RUN AWAY (rAF throttled) ---------- */
+function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+
+let lastX = 0, lastY = 0;
+let rafPending = false;
 
 function moveNoAway(pointerX, pointerY) {
   const z = zone.getBoundingClientRect();
   const b = noBtn.getBoundingClientRect();
 
-  // pointer position relative to the zone
   const px = pointerX - z.left;
   const py = pointerY - z.top;
 
-  // current center of the button relative to the zone
   const cx = (b.left - z.left) + b.width / 2;
   const cy = (b.top - z.top) + b.height / 2;
 
-  // direction away from pointer
   let dx = cx - px;
   let dy = cy - py;
   const mag = Math.hypot(dx, dy) || 1;
-  dx /= mag;
-  dy /= mag;
+  dx /= mag; dy /= mag;
 
-  // how far to jump each time
-  const step = 140;
+  const isMobile = window.matchMedia("(max-width: 420px)").matches;
+  const step = isMobile ? 110 : 150;
 
-  // new top-left (relative to zone)
   let newLeft = (b.left - z.left) + dx * step;
   let newTop  = (b.top  - z.top ) + dy * step;
 
-  // keep inside zone
   newLeft = clamp(newLeft, 0, z.width - b.width);
   newTop  = clamp(newTop,  0, z.height - b.height);
 
-  // IMPORTANT: clear 'right' so it doesn't stretch
-  noBtn.style.right = "auto";
-  noBtn.style.left = newLeft + "px";
-  noBtn.style.top  = newTop + "px";
-
-  // keep transform consistent (avoid weird jumps)
+  noBtn.style.right = "auto";      // prevent stretching
+  noBtn.style.left  = newLeft + "px";
+  noBtn.style.top   = newTop + "px";
   noBtn.style.transform = "none";
 }
 
 zone.addEventListener("pointermove", (e) => {
-  const b = noBtn.getBoundingClientRect();
-  const d = Math.hypot(
-    (b.left + b.width / 2) - e.clientX,
-    (b.top + b.height / 2) - e.clientY
-  );
-  if (d < 140) moveNoAway(e.clientX, e.clientY);
+  lastX = e.clientX;
+  lastY = e.clientY;
+
+  if (rafPending) return;
+  rafPending = true;
+
+  requestAnimationFrame(() => {
+    rafPending = false;
+
+    const b = noBtn.getBoundingClientRect();
+    const d = Math.hypot(
+      (b.left + b.width / 2) - lastX,
+      (b.top + b.height / 2) - lastY
+    );
+
+    const threshold = window.matchMedia("(max-width: 420px)").matches ? 120 : 150;
+    if (d < threshold) moveNoAway(lastX, lastY);
+  });
 });
 
-// make clicking "No" impossible
 noBtn.addEventListener("click", (e) => e.preventDefault());
 noBtn.addEventListener("pointerdown", (e) => {
   moveNoAway(e.clientX, e.clientY);
   e.preventDefault();
 });
 
-/* CONFETTI */
-const confettiCanvas=document.getElementById("confettiCanvas");
-confettiCanvas.width=window.innerWidth;
-confettiCanvas.height=window.innerHeight;
-const confettiInstance=confetti.create(confettiCanvas,{resize:true});
+/* ---------- CONFETTI ---------- */
+const confettiCanvas = document.getElementById("confettiCanvas");
+const confettiInstance = confetti.create(confettiCanvas, { resize: true, useWorker: true });
 
-/* MUSIC */
-let player,muted=true;
-function onYouTubeIframeAPIReady(){
-  player=new YT.Player("yt-player",{videoId:"KtlgYxa6BMU",playerVars:{start:48}});
+/* ---------- YOUTUBE MUSIC ---------- */
+let player = null;
+let muted = true;
+
+const VIDEO_ID = "KtlgYxa6BMU"; // Lord Huron - The Night We Met (Official Audio)
+const CHORUS_START = 48;
+const TARGET_VOL = 60;
+
+function setMuteIcon() {
+  muteBtn.textContent = muted ? "🔇" : "🔊";
 }
-window.onYouTubeIframeAPIReady=onYouTubeIframeAPIReady;
+setMuteIcon();
 
-/* YES CLICK */
-yesBtn.onclick=()=>{
+function onYouTubeIframeAPIReady(){
+  player = new YT.Player("yt-player", {
+    videoId: VIDEO_ID,
+    playerVars: {
+      start: CHORUS_START,
+      autoplay: 0,
+      controls: 0,
+      playsinline: 1,
+      rel: 0,
+      modestbranding: 1
+    },
+    events: {
+      onReady: () => {
+        try { player.setVolume(0); } catch (_) {}
+      }
+    }
+  });
+}
+window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+
+let fadeTimer = null;
+function fadeInVolume() {
+  if (!player) return;
+  clearInterval(fadeTimer);
+  let v = 0;
+  try { player.setVolume(0); } catch (_) {}
+
+  fadeTimer = setInterval(() => {
+    v += 5;
+    if (v >= TARGET_VOL) { v = TARGET_VOL; clearInterval(fadeTimer); }
+    try { player.setVolume(v); } catch (_) {}
+  }, 120);
+}
+
+/* ---------- YES CLICK ---------- */
+yesBtn.onclick = () => {
   card.classList.add("show-yes");
-  zone.style.display="none";
-  hint.style.display="none";
+  zone.style.display = "none";
+  hint.style.display = "none";
 
-  player.playVideo();
-  player.setVolume(60);
-  muted=false;
-  muteBtn.textContent="🔊";
-  yesTitle.classList.add("glow");
+  // Start YouTube ONLY from this user gesture (mobile-safe)
+  if (player && typeof player.playVideo === "function") {
+    try {
+      player.seekTo(CHORUS_START, true);
+      player.playVideo();
+      muted = false;
+      setMuteIcon();
+      yesTitle.classList.add("glow");
+      fadeInVolume();
+    } catch (_) {}
+  }
 
-  confettiInstance({particleCount:200,spread:120});
+  confettiInstance({ particleCount: 220, spread: 130, startVelocity: 45, origin: { x: 0.5, y: 0.55 } });
 };
 
-muteBtn.onclick=()=>{
-  if(!player) return;
-  muted=!muted;
-  player.setVolume(muted?0:60);
-  muteBtn.textContent=muted?"🔇":"🔊";
-  yesTitle.classList.toggle("glow",!muted);
+muteBtn.onclick = () => {
+  if (!player) return;
+  muted = !muted;
+
+  try { player.setVolume(muted ? 0 : TARGET_VOL); } catch (_) {}
+  yesTitle.classList.toggle("glow", !muted);
+  setMuteIcon();
 };
 </script>
 </body>
 </html>
-
-
