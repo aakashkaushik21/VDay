@@ -269,13 +269,64 @@ const yesTitle = document.getElementById("yesTitle");
 const muteBtn = document.getElementById("muteBtn");
 
 /* NO RUN AWAY */
-zone.addEventListener("pointermove", e=>{
-  const b=noBtn.getBoundingClientRect();
-  const d=Math.hypot(b.x-e.clientX,b.y-e.clientY);
-  if(d<120){
-    noBtn.style.left=Math.random()*60+"%";
-    noBtn.style.top=Math.random()*60+"%";
-  }
+/* NO RUN AWAY (proper + no stretching) */
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(max, n));
+}
+
+function moveNoAway(pointerX, pointerY) {
+  const z = zone.getBoundingClientRect();
+  const b = noBtn.getBoundingClientRect();
+
+  // pointer position relative to the zone
+  const px = pointerX - z.left;
+  const py = pointerY - z.top;
+
+  // current center of the button relative to the zone
+  const cx = (b.left - z.left) + b.width / 2;
+  const cy = (b.top - z.top) + b.height / 2;
+
+  // direction away from pointer
+  let dx = cx - px;
+  let dy = cy - py;
+  const mag = Math.hypot(dx, dy) || 1;
+  dx /= mag;
+  dy /= mag;
+
+  // how far to jump each time
+  const step = 140;
+
+  // new top-left (relative to zone)
+  let newLeft = (b.left - z.left) + dx * step;
+  let newTop  = (b.top  - z.top ) + dy * step;
+
+  // keep inside zone
+  newLeft = clamp(newLeft, 0, z.width - b.width);
+  newTop  = clamp(newTop,  0, z.height - b.height);
+
+  // IMPORTANT: clear 'right' so it doesn't stretch
+  noBtn.style.right = "auto";
+  noBtn.style.left = newLeft + "px";
+  noBtn.style.top  = newTop + "px";
+
+  // keep transform consistent (avoid weird jumps)
+  noBtn.style.transform = "none";
+}
+
+zone.addEventListener("pointermove", (e) => {
+  const b = noBtn.getBoundingClientRect();
+  const d = Math.hypot(
+    (b.left + b.width / 2) - e.clientX,
+    (b.top + b.height / 2) - e.clientY
+  );
+  if (d < 140) moveNoAway(e.clientX, e.clientY);
+});
+
+// make clicking "No" impossible
+noBtn.addEventListener("click", (e) => e.preventDefault());
+noBtn.addEventListener("pointerdown", (e) => {
+  moveNoAway(e.clientX, e.clientY);
+  e.preventDefault();
 });
 
 /* CONFETTI */
@@ -316,3 +367,4 @@ muteBtn.onclick=()=>{
 </script>
 </body>
 </html>
+
