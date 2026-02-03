@@ -1,17 +1,4 @@
-yesBtn.addEventListener("click", () => {
-  zone.style.display = "none";
-  hint.style.display = "none";
-
-  // HIDE THE QUESTION TITLE
-  document.getElementById("questionTitle").style.display = "none";
-
-  result.style.display = "block";
-
-  resizeConfettiCanvas();
-
-  startYouTubeMusic();
-  setTimeout(() => fullScreenConfetti(), 400);
-});<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -21,7 +8,7 @@ yesBtn.addEventListener("click", () => {
   <!-- Confetti library -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
-  <!-- YouTube IFrame API (required for autoplay-on-click + volume fade) -->
+  <!-- YouTube IFrame API (required for play-on-click + volume control) -->
   <script src="https://www.youtube.com/iframe_api"></script>
 
   <style>
@@ -67,6 +54,21 @@ yesBtn.addEventListener("click", () => {
       position: relative;
     }
 
+    /* Mute button */
+    #muteBtn{
+      position:absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(255,255,255,0.9);
+      border:none;
+      border-radius:999px;
+      padding: 10px 12px;
+      font-size: 18px;
+      cursor:pointer;
+      box-shadow: 0 6px 14px rgba(0,0,0,.15);
+      line-height: 1;
+    }
+
     .art{
       width: min(240px, 68vw);
       margin: 8px auto 10px;
@@ -79,6 +81,16 @@ yesBtn.addEventListener("click", () => {
       line-height: 1.12;
       margin: 10px 0 16px;
       padding: 0 6px;
+    }
+
+    /* Fade-out title */
+    .fade-title{
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .fade-title.hide{
+      opacity: 0;
+      transform: translateY(-20px);
+      pointer-events: none;
     }
 
     .button-zone{
@@ -166,21 +178,6 @@ yesBtn.addEventListener("click", () => {
       from{ transform: scale(.96); opacity:0; }
       to{ transform: scale(1); opacity:1; }
     }
-
-    /* Minimal mute button */
-    #muteBtn{
-      position:absolute;
-      top: 12px;
-      right: 12px;
-      background: rgba(255,255,255,0.9);
-      border:none;
-      border-radius:999px;
-      padding: 10px 12px;
-      font-size: 18px;
-      cursor:pointer;
-      box-shadow: 0 6px 14px rgba(0,0,0,.15);
-      line-height: 1;
-    }
   </style>
 </head>
 
@@ -231,7 +228,7 @@ yesBtn.addEventListener("click", () => {
         fill="#ff7aa2"/>
     </svg>
 
-    <h1>Dr. Disha Sethi, will you be my valentine?</h1>
+    <h1 id="questionTitle" class="fade-title">Dr. Disha Sethi, will you be my valentine?</h1>
 
     <section class="button-zone" id="zone" aria-label="Valentine buttons">
       <button class="choice" id="yesBtn" type="button">Yes</button>
@@ -257,6 +254,7 @@ yesBtn.addEventListener("click", () => {
     const result = document.getElementById("result");
     const hint = document.getElementById("hint");
     const muteBtn = document.getElementById("muteBtn");
+    const questionTitle = document.getElementById("questionTitle");
 
     /* ---------- CONFETTI ---------- */
     const confettiCanvas = document.getElementById("confettiCanvas");
@@ -379,6 +377,7 @@ yesBtn.addEventListener("click", () => {
     }
     setMuteIcon();
 
+    // REQUIRED: must be global for the YouTube API
     function onYouTubeIframeAPIReady() {
       player = new YT.Player("yt-player", {
         height: "0",
@@ -394,19 +393,19 @@ yesBtn.addEventListener("click", () => {
         events: {
           onReady: () => {
             ytReady = true;
-            // Start muted at 0 volume (safe)
-            player.setVolume(0);
+            try { player.setVolume(0); } catch (_) {}
           }
         }
       });
     }
+    window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 
     function fadeInYouTube() {
       if (!player) return;
       clearInterval(fadeInterval);
 
       let vol = 0;
-      player.setVolume(0);
+      try { player.setVolume(0); } catch (_) {}
 
       fadeInterval = setInterval(() => {
         vol += 5;
@@ -414,47 +413,47 @@ yesBtn.addEventListener("click", () => {
           vol = TARGET_VOLUME;
           clearInterval(fadeInterval);
         }
-        player.setVolume(vol);
+        try { player.setVolume(vol); } catch (_) {}
       }, 120);
     }
 
     function startYouTubeMusic() {
       if (!ytReady || !player) return;
-
       // Must be called from a user gesture (YES click)
-      player.seekTo(CHORUS_START, true);
-      player.playVideo();
-
-      ytStarted = true;
-      ytMuted = false;
-      setMuteIcon();
-      fadeInYouTube();
+      try {
+        player.seekTo(CHORUS_START, true);
+        player.playVideo();
+        ytStarted = true;
+        ytMuted = false;
+        setMuteIcon();
+        fadeInYouTube();
+      } catch (_) {}
     }
 
     muteBtn.addEventListener("click", () => {
       if (!player || !ytStarted) return;
-
       ytMuted = !ytMuted;
-      player.setVolume(ytMuted ? 0 : TARGET_VOLUME);
+      try { player.setVolume(ytMuted ? 0 : TARGET_VOLUME); } catch (_) {}
       setMuteIcon();
     });
 
     /* ---------- YES CLICK ---------- */
-  yesBtn.addEventListener("click", () => {
-  zone.style.display = "none";
-  hint.style.display = "none";
+    yesBtn.addEventListener("click", () => {
+      // Hide buttons + hint
+      zone.style.display = "none";
+      hint.style.display = "none";
 
-  // HIDE THE QUESTION TITLE
-  document.getElementById("questionTitle").style.display = "none";
+      // Fade out the question title
+      if (questionTitle) questionTitle.classList.add("hide");
 
-  result.style.display = "block";
+      // Show result
+      result.style.display = "block";
 
-  resizeConfettiCanvas();
-
-  startYouTubeMusic();
-  setTimeout(() => fullScreenConfetti(), 400);
-});
+      // Start music + confetti
+      resizeConfettiCanvas();
+      startYouTubeMusic();
+      setTimeout(() => fullScreenConfetti(), 400);
+    });
   </script>
 </body>
 </html>
-
