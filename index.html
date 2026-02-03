@@ -1,546 +1,318 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Will you be my Valentine?</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Will you be my Valentine?</title>
 
-  <!-- Confetti -->
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<!-- Confetti -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
-  <!-- YouTube IFrame API -->
-  <script src="https://www.youtube.com/iframe_api"></script>
+<!-- YouTube API -->
+<script src="https://www.youtube.com/iframe_api"></script>
 
-  <style>
-    :root{
-      --bg1:#ffd6e7;
-      --bg2:#ffeef6;
-      --card:#ffffffcc;
-      --yes:#ff3b7a;
-      --yesHover:#ff1f68;
-      --text:#111827;
-    }
+<style>
+:root{
+  --bg1:#ffd6e7;
+  --bg2:#ffeef6;
+  --card:#ffffffcc;
+  --yes:#ff3b7a;
+  --yesHover:#ff1f68;
+  --text:#111827;
+}
 
-    *{ box-sizing:border-box; }
+*{ box-sizing:border-box; }
 
-    body{
-      margin:0;
-      min-height:100svh;
-      display:grid;
-      place-items:center;
-      background: radial-gradient(circle at top, var(--bg2), var(--bg1));
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      overflow:hidden;
-      padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
-      color: var(--text);
-    }
+body{
+  margin:0;
+  min-height:100svh;
+  display:grid;
+  place-items:center;
+  background: radial-gradient(circle at top, var(--bg2), var(--bg1));
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: var(--text);
 
-    /* FULL-SCREEN CONFETTI CANVAS */
-    #confettiCanvas{
-      position:fixed;
-      inset:0;
-      width:100vw;
-      height:100vh;
-      pointer-events:none;
-      z-index:9999;
-    }
+  /* IMPORTANT: allow vertical scrolling */
+  overflow-y:auto;
+  overflow-x:hidden;
 
-    .card{
-      width:min(720px, 92vw);
-      padding: clamp(18px, 3.6vw, 26px) clamp(16px, 3vw, 22px);
-      background: var(--card);
-      backdrop-filter: blur(10px);
-      border-radius: 22px;
-      text-align:center;
-      box-shadow: 0 18px 60px rgba(0,0,0,.15);
-      position: relative;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+}
 
-      /* Prevent clipping on short screens */
-      max-height: calc(100svh - 32px);
-      overflow: hidden; /* needed for slide */
-    }
+/* CONFETTI */
+#confettiCanvas{
+  position:fixed;
+  inset:0;
+  width:100vw;
+  height:100vh;
+  pointer-events:none;
+  z-index:9999;
+}
 
-    /* Mute button */
-    #muteBtn{
-      position:absolute;
-      top: 12px;
-      right: 12px;
-      background: rgba(255,255,255,0.9);
-      border:none;
-      border-radius:999px;
-      padding: 10px 12px;
-      font-size: 18px;
-      cursor:pointer;
-      box-shadow: 0 6px 14px rgba(0,0,0,.15);
-      line-height: 1;
-      z-index: 10;
-    }
+/* CARD */
+.card{
+  width:min(720px, 92vw);
+  background: var(--card);
+  backdrop-filter: blur(10px);
+  border-radius: 22px;
+  box-shadow: 0 18px 60px rgba(0,0,0,.15);
+  position: relative;
 
-    /* Stage holds the sliding strip */
-    .stage{
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-    }
+  max-height: calc(100svh - 32px);
+  overflow-x:hidden;
+  overflow-y:auto;
+  -webkit-overflow-scrolling: touch;
 
-    /* Sliding strip */
-    .pages{
-      display: flex;
-      width: 200%;
-      transform: translateX(0%);
-      transition: transform 520ms cubic-bezier(.2,.9,.2,1);
-      will-change: transform;
-    }
-    .card.show-yes .pages{
-      transform: translateX(-50%);
-    }
+  padding: clamp(18px, 3.6vw, 26px) clamp(16px, 3vw, 22px);
+}
 
-    /* Each page takes full width */
-    .page{
-      flex: 0 0 50%;
-      width: 50%;
-      padding-top: 6px;
+/* MUTE */
+#muteBtn{
+  position:absolute;
+  top:12px;
+  right:12px;
+  border:none;
+  border-radius:999px;
+  padding:10px 12px;
+  font-size:18px;
+  cursor:pointer;
+  background:rgba(255,255,255,.9);
+  box-shadow:0 6px 14px rgba(0,0,0,.15);
+}
 
-      /* Allow vertical scroll inside card if content is tall */
-      max-height: calc(100svh - 32px);
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: 16px;
-    }
+/* SLIDE SYSTEM */
+.stage{ width:100%; overflow:hidden; }
 
-    /* Art */
-    .art{
-      width: min(240px, 68vw);
-      margin: 8px auto 2px;
-      display:block;
-      filter: drop-shadow(0 10px 14px rgba(0,0,0,.12));
-    }
+.pages{
+  display:flex;
+  width:200%;
+  transition:transform .55s cubic-bezier(.2,.9,.2,1);
+}
 
-    h1{
-      font-size: clamp(22px, 5.4vw, 44px);
-      line-height: 1.12;
-      margin: 6px 0 10px;
-      padding: 0 6px;
-    }
+.card.show-yes .pages{
+  transform: translateX(-50%);
+}
 
-    .sub{
-      font-size: 14px;
-      opacity: .75;
-      margin: 0 0 8px;
-    }
+.page{
+  width:50%;
+  padding-bottom:20px;
+}
 
-    /* Buttons */
-    .button-zone{
-      position:relative;
-      width: min(560px, 100%);
-      height: clamp(140px, 22vh, 180px);
-      margin: 6px auto 0;
-      touch-action:none;
-    }
+/* ART */
+.art{
+  width:min(240px, 70vw);
+  display:block;
+  margin:10px auto 6px;
+}
 
-    button.choice{
-      position:absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      padding: 16px 22px;
-      min-width: 120px;
-      font-size: 18px;
-      font-weight: 800;
-      border-radius: 999px;
-      border:none;
-      cursor:pointer;
-      box-shadow: 0 10px 24px rgba(0,0,0,.14);
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-      transition: transform .12s ease, background .12s ease;
-      touch-action: manipulation;
-    }
+h1{
+  font-size:clamp(22px,5.5vw,44px);
+  line-height:1.15;
+  margin:6px 0 10px;
+  text-align:center;
+}
 
-    #yesBtn{
-      left: 10%;
-      background: var(--yes);
-      color:#fff;
-    }
-    #yesBtn:hover{ background: var(--yesHover); }
+.sub{
+  font-size:14px;
+  opacity:.75;
+  text-align:center;
+}
 
-    #noBtn{
-      right: 10%;
-      left:auto;
-      background:#e5e7eb;
-      color:#111827;
-    }
+/* BUTTONS */
+.button-zone{
+  position:relative;
+  width:min(520px,100%);
+  height:160px;
+  margin:10px auto 0;
+}
 
-    /* small phones: stack vertically so nothing overlaps */
-    @media (max-width: 420px){
-      .button-zone{ height: 200px; }
-      #yesBtn{
-        left: 50%;
-        top: 40%;
-        transform: translate(-50%, -50%);
-      }
-      #noBtn{
-        right: auto;
-        left: 50%;
-        top: 68%;
-        transform: translate(-50%, -50%);
-      }
-    }
+.choice{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  padding:16px 24px;
+  font-size:18px;
+  font-weight:800;
+  border-radius:999px;
+  border:none;
+  cursor:pointer;
+  box-shadow:0 10px 24px rgba(0,0,0,.14);
+}
 
-    .hint{
-      margin-top: 10px;
-      font-size: 13px;
-      opacity: .75;
-    }
+#yesBtn{
+  left:10%;
+  background:var(--yes);
+  color:white;
+}
 
-    /* YES PAGE */
-    .yes-title{
-      font-size: clamp(26px, 6.2vw, 52px);
-      margin: 8px 0 2px;
-      letter-spacing: .2px;
-    }
+#noBtn{
+  right:10%;
+  background:#e5e7eb;
+}
 
-    .yes-detail{
-      font-size: clamp(14px, 2.6vw, 16px);
-      opacity: .8;
-      margin: 0 0 10px;
-      padding: 0 10px;
-    }
+/* Mobile stack */
+@media(max-width:420px){
+  .button-zone{ height:200px; }
+  #yesBtn{ left:50%; top:38%; transform:translate(-50%,-50%); }
+  #noBtn{ left:50%; top:68%; transform:translate(-50%,-50%); }
+}
 
-    .chips{
-      display:flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content:center;
-      margin: 6px 0 10px;
-    }
-    .chip{
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.65);
-      box-shadow: 0 8px 20px rgba(0,0,0,.08);
-      font-weight: 700;
-      font-size: 13px;
-    }
+.hint{
+  margin-top:8px;
+  font-size:13px;
+  opacity:.75;
+  text-align:center;
+}
 
-    .fireworks{
-      width: min(420px, 92vw);
-      margin: 6px auto 0;
-      display:block;
-      border-radius: 14px;
-      box-shadow: 0 12px 30px rgba(0,0,0,.12);
-    }
+/* YES PAGE */
+.yes-title{
+  font-size:clamp(26px,6.5vw,52px);
+  margin-top:12px;
+}
 
-    /* Glow synced to music */
-    .glow{
-      animation: glowPulse 900ms ease-in-out infinite;
-      text-shadow:
-        0 0 12px rgba(255,59,122,.35),
-        0 0 24px rgba(255,59,122,.25),
-        0 0 48px rgba(255,59,122,.18);
-    }
+.yes-detail{
+  opacity:.8;
+  margin-bottom:10px;
+  text-align:center;
+}
 
-    @keyframes glowPulse{
-      0%   { transform: translateY(0) scale(1);   filter: saturate(1); }
-      50%  { transform: translateY(-1px) scale(1.015); filter: saturate(1.15); }
-      100% { transform: translateY(0) scale(1);   filter: saturate(1); }
-    }
-  </style>
+.chips{
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+
+.chip{
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.7);
+  font-weight:700;
+  font-size:13px;
+}
+
+/* GLOW */
+.glow{
+  animation: glowPulse 900ms infinite;
+  text-shadow:0 0 14px rgba(255,59,122,.4);
+}
+
+@keyframes glowPulse{
+  50%{ transform:scale(1.03); }
+}
+
+/* SHORT SCREENS */
+@media(max-height:700px){
+  .art{ width:200px; }
+  .button-zone{ height:140px; }
+}
+</style>
 </head>
 
 <body>
-  <canvas id="confettiCanvas"></canvas>
+<canvas id="confettiCanvas"></canvas>
+<div id="yt-player" style="display:none"></div>
 
-  <!-- Hidden YouTube player (audio-only effect) -->
-  <div id="yt-player" style="position:fixed; left:-9999px; top:-9999px; width:1px; height:1px; opacity:0;"></div>
+<main class="card" id="card">
+<button id="muteBtn">🔇</button>
 
-  <main class="card" id="card">
-    <button id="muteBtn" type="button" aria-label="Mute/unmute">🔇</button>
+<div class="stage">
+<div class="pages">
 
-    <div class="stage">
-      <div class="pages" id="pages">
-        <!-- PAGE 1 -->
-        <section class="page" id="questionPage" aria-label="Question page">
-          <!-- ANIMAL WITH HEART -->
-          <svg class="art" viewBox="0 0 320 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <defs>
-              <linearGradient id="fur" x1="0" x2="1">
-                <stop offset="0" stop-color="#f7c7a1"/>
-                <stop offset="1" stop-color="#f2a97b"/>
-              </linearGradient>
-              <linearGradient id="heart" x1="0" x2="1">
-                <stop offset="0" stop-color="#ff4d7d"/>
-                <stop offset="1" stop-color="#ff1f68"/>
-              </linearGradient>
-            </defs>
+<!-- PAGE 1 -->
+<section class="page">
+<svg class="art" viewBox="0 0 320 240">
+<circle cx="160" cy="120" r="90" fill="#f2a97b"/>
+<circle cx="140" cy="110" r="6"/>
+<circle cx="180" cy="110" r="6"/>
+<path d="M160 125 C155 135 165 135 160 145" fill="#ff7aa2"/>
+<path d="M200 50 C200 30 230 30 230 50 C230 75 200 85 200 100" fill="#ff4d7d"/>
+</svg>
 
-            <path d="M250 50 C250 33 270 25 282 38
-              C294 25 314 33 314 50
-              C314 78 282 92 282 106
-              C282 92 250 78 250 50Z"
-              fill="url(#heart)"/>
+<h1>Dr. Disha Sethi, will you be my valentine?</h1>
+<p class="sub">Just one click… no pressure 😊</p>
 
-            <path d="M90 120 C90 70 140 40 190 60
-              C240 40 290 70 290 120
-              C290 180 240 210 190 210
-              C140 210 90 180 90 120Z"
-              fill="url(#fur)"/>
+<div class="button-zone" id="zone">
+<button class="choice" id="yesBtn">Yes</button>
+<button class="choice" id="noBtn">No</button>
+</div>
 
-            <path d="M110 92 L95 55 L140 78 Z" fill="#f2a97b"/>
-            <path d="M270 92 L285 55 L240 78 Z" fill="#f2a97b"/>
+<div class="hint" id="hint">“No” seems a bit shy 😈</div>
+</section>
 
-            <circle cx="160" cy="130" r="8"/>
-            <circle cx="220" cy="130" r="8"/>
+<!-- PAGE 2 -->
+<section class="page">
+<h1 class="yes-title" id="yesTitle">She said YES 💖</h1>
+<p class="yes-detail">February 14th • 9:00 PM IST • our screens 💻</p>
 
-            <path d="M190 144 C186 144 182 148 182 152
-              C182 160 190 164 190 170
-              C190 164 198 160 198 152
-              C198 148 194 144 190 144Z"
-              fill="#ff7aa2"/>
-          </svg>
+<div class="chips">
+<span class="chip">🎧 Endless Conversations</span>
+<span class="chip">💬 Movie Night</span>
+<span class="chip">🍿 Yummy Food</span>
+</div>
 
-          <h1 id="questionTitle">Dr. Disha Sethi, will you be my valentine?</h1>
-          <p class="sub">Just one click… no pressure 😌</p>
+<img src="https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif" style="width:100%;border-radius:14px">
+</section>
 
-          <section class="button-zone" id="zone" aria-label="Valentine buttons">
-            <button class="choice" id="yesBtn" type="button">Yes</button>
-            <button class="choice" id="noBtn" type="button">No</button>
-          </section>
+</div>
+</div>
+</main>
 
-          <div class="hint" id="hint">“No” seems a bit shy 😈</div>
-        </section>
+<script>
+const card = document.getElementById("card");
+const yesBtn = document.getElementById("yesBtn");
+const noBtn = document.getElementById("noBtn");
+const zone = document.getElementById("zone");
+const hint = document.getElementById("hint");
+const yesTitle = document.getElementById("yesTitle");
+const muteBtn = document.getElementById("muteBtn");
 
-        <!-- PAGE 2 -->
-        <section class="page" id="yesPage" aria-label="Yes page">
-          <h1 class="yes-title" id="yesTitle">She said YES 💖</h1>
-          <p class="yes-detail">February 14th • 9:00 PM IST • our computer screens :D</p>
+/* NO RUN AWAY */
+zone.addEventListener("pointermove", e=>{
+  const b=noBtn.getBoundingClientRect();
+  const d=Math.hypot(b.x-e.clientX,b.y-e.clientY);
+  if(d<120){
+    noBtn.style.left=Math.random()*60+"%";
+    noBtn.style.top=Math.random()*60+"%";
+  }
+});
 
-          <div class="chips" aria-label="Plan chips">
-            <span class="chip">🎧 Endless Conversations</span>
-            <span class="chip">💬 Movie Night</span>
-            <span class="chip">🍿 Something yummy to eat</span>
-          </div>
+/* CONFETTI */
+const confettiCanvas=document.getElementById("confettiCanvas");
+confettiCanvas.width=window.innerWidth;
+confettiCanvas.height=window.innerHeight;
+const confettiInstance=confetti.create(confettiCanvas,{resize:true});
 
-          <img
-            class="fireworks"
-            src="https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif"
-            alt="Fireworks"
-          />
-        </section>
-      </div>
-    </div>
-  </main>
+/* MUSIC */
+let player,muted=true;
+function onYouTubeIframeAPIReady(){
+  player=new YT.Player("yt-player",{videoId:"KtlgYxa6BMU",playerVars:{start:48}});
+}
+window.onYouTubeIframeAPIReady=onYouTubeIframeAPIReady;
 
-  <script>
-    const card = document.getElementById("card");
-    const zone = document.getElementById("zone");
-    const yesBtn = document.getElementById("yesBtn");
-    const noBtn = document.getElementById("noBtn");
-    const hint = document.getElementById("hint");
-    const muteBtn = document.getElementById("muteBtn");
-    const yesTitle = document.getElementById("yesTitle");
+/* YES CLICK */
+yesBtn.onclick=()=>{
+  card.classList.add("show-yes");
+  zone.style.display="none";
+  hint.style.display="none";
 
-    /* ---------- CONFETTI ---------- */
-    const confettiCanvas = document.getElementById("confettiCanvas");
+  player.playVideo();
+  player.setVolume(60);
+  muted=false;
+  muteBtn.textContent="🔊";
+  yesTitle.classList.add("glow");
 
-    function resizeConfettiCanvas() {
-      const dpr = Math.max(1, window.devicePixelRatio || 1);
-      confettiCanvas.width = Math.floor(window.innerWidth * dpr);
-      confettiCanvas.height = Math.floor(window.innerHeight * dpr);
-      confettiCanvas.style.width = "100vw";
-      confettiCanvas.style.height = "100vh";
-    }
+  confettiInstance({particleCount:200,spread:120});
+};
 
-    resizeConfettiCanvas();
-    window.addEventListener("resize", resizeConfettiCanvas);
-    window.addEventListener("orientationchange", () => setTimeout(resizeConfettiCanvas, 200));
-
-    const confettiInstance = (window.confetti && window.confetti.create)
-      ? window.confetti.create(confettiCanvas, { resize: false, useWorker: true })
-      : null;
-
-    function fullScreenConfetti() {
-      if (!confettiInstance) return;
-
-      const end = Date.now() + 1600;
-
-      (function frame() {
-        confettiInstance({
-          particleCount: 12,
-          spread: 90,
-          startVelocity: 45,
-          ticks: 180,
-          origin: { x: Math.random(), y: Math.random() * 0.35 }
-        });
-        if (Date.now() < end) requestAnimationFrame(frame);
-      })();
-
-      setTimeout(() => {
-        confettiInstance({
-          particleCount: 260,
-          spread: 140,
-          startVelocity: 60,
-          ticks: 220,
-          origin: { x: 0.5, y: 0.55 }
-        });
-      }, 280);
-    }
-
-    /* ---------- YES BUTTON GROWS ---------- */
-    let yesScale = 1;
-    function growYes() {
-      yesScale = Math.min(2.1, yesScale + 0.08);
-
-      if (window.matchMedia("(max-width: 420px)").matches) {
-        yesBtn.style.transform = `translate(-50%, -50%) scale(${yesScale})`;
-      } else {
-        yesBtn.style.transform = `translateY(-50%) scale(${yesScale})`;
-      }
-    }
-
-    /* ---------- NO BUTTON RUNS AWAY ---------- */
-    function clamp(n, min, max) {
-      return Math.max(min, Math.min(max, n));
-    }
-
-    function moveNo(px, py) {
-      const z = zone.getBoundingClientRect();
-      const b = noBtn.getBoundingClientRect();
-
-      let dx = (b.left + b.width / 2) - px;
-      let dy = (b.top + b.height / 2) - py;
-      let mag = Math.hypot(dx, dy) || 1;
-      dx /= mag;
-      dy /= mag;
-
-      const step = window.matchMedia("(max-width: 420px)").matches ? 120 : 150;
-
-      let newLeft = (b.left - z.left) + dx * step;
-      let newTop  = (b.top  - z.top ) + dy * step;
-
-      newLeft = clamp(newLeft, 0, z.width - b.width);
-      newTop  = clamp(newTop,  0, z.height - b.height);
-
-      noBtn.style.left = newLeft + "px";
-      noBtn.style.top  = newTop + "px";
-      noBtn.style.right = "auto";
-      noBtn.style.transform = "none";
-
-      growYes();
-    }
-
-    zone.addEventListener("pointermove", e => {
-      const b = noBtn.getBoundingClientRect();
-      const d = Math.hypot(
-        (b.left + b.width / 2) - e.clientX,
-        (b.top  + b.height / 2) - e.clientY
-      );
-      const threshold = window.matchMedia("(max-width: 420px)").matches ? 110 : 140;
-      if (d < threshold) moveNo(e.clientX, e.clientY);
-    });
-
-    noBtn.addEventListener("pointerdown", e => {
-      moveNo(e.clientX, e.clientY);
-      e.preventDefault();
-    });
-    noBtn.addEventListener("click", e => e.preventDefault());
-
-    /* ---------- YOUTUBE MUSIC (chorus start + fade in) ---------- */
-    let player;
-    let fadeInterval;
-    let ytReady = false;
-    let ytStarted = false;
-    let ytMuted = true;
-
-    const VIDEO_ID = "KtlgYxa6BMU";  // Lord Huron - The Night We Met (Official Audio)
-    const CHORUS_START = 48;         // seconds
-    const TARGET_VOLUME = 60;        // 0..100
-
-    function setMuteIcon() {
-      muteBtn.textContent = (ytStarted && !ytMuted) ? "🔊" : "🔇";
-    }
-    setMuteIcon();
-
-    function onYouTubeIframeAPIReady() {
-      player = new YT.Player("yt-player", {
-        height: "0",
-        width: "0",
-        videoId: VIDEO_ID,
-        playerVars: {
-          autoplay: 0,
-          controls: 0,
-          start: CHORUS_START,
-          modestbranding: 1,
-          rel: 0
-        },
-        events: {
-          onReady: () => {
-            ytReady = true;
-            try { player.setVolume(0); } catch (_) {}
-          }
-        }
-      });
-    }
-    window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
-
-    function fadeInYouTube() {
-      if (!player) return;
-      clearInterval(fadeInterval);
-
-      let vol = 0;
-      try { player.setVolume(0); } catch (_) {}
-
-      fadeInterval = setInterval(() => {
-        vol += 5;
-        if (vol >= TARGET_VOLUME) {
-          vol = TARGET_VOLUME;
-          clearInterval(fadeInterval);
-        }
-        try { player.setVolume(vol); } catch (_) {}
-      }, 120);
-    }
-
-    function startYouTubeMusic() {
-      if (!ytReady || !player) return;
-
-      try {
-        player.seekTo(CHORUS_START, true);
-        player.playVideo();
-
-        ytStarted = true;
-        ytMuted = false;
-        setMuteIcon();
-
-        yesTitle.classList.add("glow");
-        fadeInYouTube();
-      } catch (_) {}
-    }
-
-    muteBtn.addEventListener("click", () => {
-      if (!player || !ytStarted) return;
-      ytMuted = !ytMuted;
-
-      try { player.setVolume(ytMuted ? 0 : TARGET_VOLUME); } catch (_) {}
-
-      if (ytMuted) yesTitle.classList.remove("glow");
-      else yesTitle.classList.add("glow");
-
-      setMuteIcon();
-    });
-
-    /* ---------- YES CLICK (transition + music + confetti) ---------- */
-    yesBtn.addEventListener("click", () => {
-      // slide to yes page
-      card.classList.add("show-yes");
-
-      // disable old page controls
-      zone.style.display = "none";
-      hint.style.display = "none";
-
-      // start music + confetti
-      resizeConfettiCanvas();
-      startYouTubeMusic();
-      setTimeout(() => fullScreenConfetti(), 420);
-    });
-  </script>
+muteBtn.onclick=()=>{
+  if(!player) return;
+  muted=!muted;
+  player.setVolume(muted?0:60);
+  muteBtn.textContent=muted?"🔇":"🔊";
+  yesTitle.classList.toggle("glow",!muted);
+};
+</script>
 </body>
 </html>
