@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Will you be my Valentine?</title>
 
-  <!-- Confetti library -->
+  <!-- Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
-  <!-- YouTube IFrame API (required for play-on-click + volume control) -->
+  <!-- YouTube IFrame API -->
   <script src="https://www.youtube.com/iframe_api"></script>
 
   <style>
@@ -18,6 +18,7 @@
       --card:#ffffffcc;
       --yes:#ff3b7a;
       --yesHover:#ff1f68;
+      --text:#111827;
     }
 
     *{ box-sizing:border-box; }
@@ -31,6 +32,7 @@
       font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
       overflow:hidden;
       padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+      color: var(--text);
     }
 
     /* FULL-SCREEN CONFETTI CANVAS */
@@ -52,6 +54,7 @@
       text-align:center;
       box-shadow: 0 18px 60px rgba(0,0,0,.15);
       position: relative;
+      overflow: hidden; /* needed for slide transition */
     }
 
     /* Mute button */
@@ -67,11 +70,41 @@
       cursor:pointer;
       box-shadow: 0 6px 14px rgba(0,0,0,.15);
       line-height: 1;
+      z-index: 10;
     }
 
+    /* --- SLIDE PAGES --- */
+    .stage{
+      position: relative;
+      width: 100%;
+      min-height: 420px;
+    }
+
+    .page{
+      position: absolute;
+      inset: 0;
+      padding-top: 8px;
+      display: grid;
+      grid-auto-rows: min-content;
+      align-content: start;
+      justify-items: center;
+      gap: 8px;
+      transition: transform 520ms cubic-bezier(.2,.9,.2,1), opacity 420ms ease;
+      will-change: transform;
+    }
+
+    /* initial positions */
+    #questionPage{ transform: translateX(0%); opacity: 1; }
+    #yesPage{ transform: translateX(110%); opacity: 1; }
+
+    /* when active */
+    .card.show-yes #questionPage{ transform: translateX(-110%); opacity: .98; }
+    .card.show-yes #yesPage{ transform: translateX(0%); opacity: 1; }
+
+    /* Art */
     .art{
       width: min(240px, 68vw);
-      margin: 8px auto 10px;
+      margin: 8px auto 2px;
       display:block;
       filter: drop-shadow(0 10px 14px rgba(0,0,0,.12));
     }
@@ -79,25 +112,22 @@
     h1{
       font-size: clamp(22px, 5.4vw, 44px);
       line-height: 1.12;
-      margin: 10px 0 16px;
+      margin: 6px 0 10px;
       padding: 0 6px;
     }
 
-    /* Fade-out title */
-    .fade-title{
-      transition: opacity 0.6s ease, transform 0.6s ease;
-    }
-    .fade-title.hide{
-      opacity: 0;
-      transform: translateY(-20px);
-      pointer-events: none;
+    .sub{
+      font-size: 14px;
+      opacity: .75;
+      margin: 0 0 8px;
     }
 
+    /* Buttons */
     .button-zone{
       position:relative;
       width: min(560px, 100%);
       height: clamp(140px, 22vh, 180px);
-      margin: 0 auto;
+      margin: 6px auto 0;
       touch-action:none;
     }
 
@@ -135,6 +165,7 @@
 
     /* small phones: stack vertically so nothing overlaps */
     @media (max-width: 420px){
+      .stage{ min-height: 460px; }
       .button-zone{ height: 200px; }
       #yesBtn{
         left: 50%;
@@ -155,28 +186,57 @@
       opacity: .75;
     }
 
-    .result{
-      display:none;
-      margin-top: 18px;
-      animation: pop .35s ease;
+    /* YES PAGE */
+    .yes-title{
+      font-size: clamp(26px, 6.2vw, 52px);
+      margin: 6px 0 2px;
+      letter-spacing: .2px;
     }
 
-    .result h2{
-      font-size: clamp(22px, 5vw, 40px);
-      margin: 10px 0;
-      line-height: 1.2;
+    .yes-detail{
+      font-size: clamp(14px, 2.6vw, 16px);
+      opacity: .8;
+      margin: 0 0 10px;
+      padding: 0 10px;
+    }
+
+    .chips{
+      display:flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content:center;
+      margin: 6px 0 10px;
+    }
+    .chip{
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.65);
+      box-shadow: 0 8px 20px rgba(0,0,0,.08);
+      font-weight: 700;
+      font-size: 13px;
     }
 
     .fireworks{
-      width: min(380px, 90vw);
-      margin: 0 auto;
+      width: min(420px, 92vw);
+      margin: 2px auto 0;
       display:block;
       border-radius: 14px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.12);
     }
 
-    @keyframes pop{
-      from{ transform: scale(.96); opacity:0; }
-      to{ transform: scale(1); opacity:1; }
+    /* Glow synced to music */
+    .glow{
+      animation: glowPulse 900ms ease-in-out infinite;
+      text-shadow:
+        0 0 12px rgba(255,59,122,.35),
+        0 0 24px rgba(255,59,122,.25),
+        0 0 48px rgba(255,59,122,.18);
+    }
+
+    @keyframes glowPulse{
+      0%   { transform: translateY(0) scale(1);   filter: saturate(1); }
+      50%  { transform: translateY(-1px) scale(1.015); filter: saturate(1.15); }
+      100% { transform: translateY(0) scale(1);   filter: saturate(1); }
     }
   </style>
 </head>
@@ -184,77 +244,93 @@
 <body>
   <canvas id="confettiCanvas"></canvas>
 
-  <!-- Hidden YouTube player container (audio-only effect) -->
+  <!-- Hidden YouTube player (audio-only effect) -->
   <div id="yt-player" style="position:fixed; left:-9999px; top:-9999px; width:1px; height:1px; opacity:0;"></div>
 
-  <main class="card">
+  <main class="card" id="card">
     <button id="muteBtn" type="button" aria-label="Mute/unmute">🔇</button>
 
-    <!-- ANIMAL WITH HEART -->
-    <svg class="art" viewBox="0 0 320 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <defs>
-        <linearGradient id="fur" x1="0" x2="1">
-          <stop offset="0" stop-color="#f7c7a1"/>
-          <stop offset="1" stop-color="#f2a97b"/>
-        </linearGradient>
-        <linearGradient id="heart" x1="0" x2="1">
-          <stop offset="0" stop-color="#ff4d7d"/>
-          <stop offset="1" stop-color="#ff1f68"/>
-        </linearGradient>
-      </defs>
+    <div class="stage">
+      <!-- PAGE 1: QUESTION -->
+      <section class="page" id="questionPage" aria-label="Question page">
+        <!-- ANIMAL WITH HEART -->
+        <svg class="art" viewBox="0 0 320 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="fur" x1="0" x2="1">
+              <stop offset="0" stop-color="#f7c7a1"/>
+              <stop offset="1" stop-color="#f2a97b"/>
+            </linearGradient>
+            <linearGradient id="heart" x1="0" x2="1">
+              <stop offset="0" stop-color="#ff4d7d"/>
+              <stop offset="1" stop-color="#ff1f68"/>
+            </linearGradient>
+          </defs>
 
-      <path d="M250 50 C250 33 270 25 282 38
-        C294 25 314 33 314 50
-        C314 78 282 92 282 106
-        C282 92 250 78 250 50Z"
-        fill="url(#heart)"/>
+          <path d="M250 50 C250 33 270 25 282 38
+            C294 25 314 33 314 50
+            C314 78 282 92 282 106
+            C282 92 250 78 250 50Z"
+            fill="url(#heart)"/>
 
-      <path d="M90 120 C90 70 140 40 190 60
-        C240 40 290 70 290 120
-        C290 180 240 210 190 210
-        C140 210 90 180 90 120Z"
-        fill="url(#fur)"/>
+          <path d="M90 120 C90 70 140 40 190 60
+            C240 40 290 70 290 120
+            C290 180 240 210 190 210
+            C140 210 90 180 90 120Z"
+            fill="url(#fur)"/>
 
-      <path d="M110 92 L95 55 L140 78 Z" fill="#f2a97b"/>
-      <path d="M270 92 L285 55 L240 78 Z" fill="#f2a97b"/>
+          <path d="M110 92 L95 55 L140 78 Z" fill="#f2a97b"/>
+          <path d="M270 92 L285 55 L240 78 Z" fill="#f2a97b"/>
 
-      <circle cx="160" cy="130" r="8"/>
-      <circle cx="220" cy="130" r="8"/>
+          <circle cx="160" cy="130" r="8"/>
+          <circle cx="220" cy="130" r="8"/>
 
-      <path d="M190 144 C186 144 182 148 182 152
-        C182 160 190 164 190 170
-        C190 164 198 160 198 152
-        C198 148 194 144 190 144Z"
-        fill="#ff7aa2"/>
-    </svg>
+          <path d="M190 144 C186 144 182 148 182 152
+            C182 160 190 164 190 170
+            C190 164 198 160 198 152
+            C198 148 194 144 190 144Z"
+            fill="#ff7aa2"/>
+        </svg>
 
-    <h1 id="questionTitle" class="fade-title">Dr. Disha Sethi, will you be my valentine?</h1>
+        <h1>Dr. Disha Sethi, will you be my valentine?</h1>
+        <p class="sub">Just one click… no pressure 😌</p>
 
-    <section class="button-zone" id="zone" aria-label="Valentine buttons">
-      <button class="choice" id="yesBtn" type="button">Yes</button>
-      <button class="choice" id="noBtn" type="button">No</button>
-    </section>
+        <section class="button-zone" id="zone" aria-label="Valentine buttons">
+          <button class="choice" id="yesBtn" type="button">Yes</button>
+          <button class="choice" id="noBtn" type="button">No</button>
+        </section>
 
-    <div class="hint" id="hint">“No” seems a bit shy 😈</div>
+        <div class="hint" id="hint">“No” seems a bit shy 😈</div>
+      </section>
 
-    <section class="result" id="result">
-      <h2>Wohooo! Let's go... February 14th, 9PM IST, our computer screens :D &lt;3 🎉</h2>
-      <img
-        class="fireworks"
-        src="https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif"
-        alt="Fireworks"
-      />
-    </section>
+      <!-- PAGE 2: YES -->
+      <section class="page" id="yesPage" aria-label="Yes page">
+        <div style="height:6px"></div>
+        <h1 class="yes-title" id="yesTitle">She said YES 💖</h1>
+        <p class="yes-detail">February 14th • 9:00 PM IST • our computer screens :D</p>
+
+        <div class="chips" aria-label="Plan chips">
+          <span class="chip">🎧 The Night We Met</span>
+          <span class="chip">💬 Video call date</span>
+          <span class="chip">🍿 Snacks ready</span>
+        </div>
+
+        <img
+          class="fireworks"
+          src="https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif"
+          alt="Fireworks"
+        />
+      </section>
+    </div>
   </main>
 
   <script>
+    const card = document.getElementById("card");
     const zone = document.getElementById("zone");
     const yesBtn = document.getElementById("yesBtn");
     const noBtn = document.getElementById("noBtn");
-    const result = document.getElementById("result");
     const hint = document.getElementById("hint");
     const muteBtn = document.getElementById("muteBtn");
-    const questionTitle = document.getElementById("questionTitle");
+    const yesTitle = document.getElementById("yesTitle");
 
     /* ---------- CONFETTI ---------- */
     const confettiCanvas = document.getElementById("confettiCanvas");
@@ -377,7 +453,7 @@
     }
     setMuteIcon();
 
-    // REQUIRED: must be global for the YouTube API
+    // REQUIRED global callback for YouTube API
     function onYouTubeIframeAPIReady() {
       player = new YT.Player("yt-player", {
         height: "0",
@@ -419,13 +495,18 @@
 
     function startYouTubeMusic() {
       if (!ytReady || !player) return;
-      // Must be called from a user gesture (YES click)
+
       try {
         player.seekTo(CHORUS_START, true);
         player.playVideo();
+
         ytStarted = true;
         ytMuted = false;
         setMuteIcon();
+
+        // start glow synced to music start
+        yesTitle.classList.add("glow");
+
         fadeInYouTube();
       } catch (_) {}
     }
@@ -433,26 +514,29 @@
     muteBtn.addEventListener("click", () => {
       if (!player || !ytStarted) return;
       ytMuted = !ytMuted;
+
       try { player.setVolume(ytMuted ? 0 : TARGET_VOLUME); } catch (_) {}
+
+      // keep glow only when unmuted (feels "synced")
+      if (ytMuted) yesTitle.classList.remove("glow");
+      else yesTitle.classList.add("glow");
+
       setMuteIcon();
     });
 
-    /* ---------- YES CLICK ---------- */
+    /* ---------- YES CLICK (transition + music + confetti) ---------- */
     yesBtn.addEventListener("click", () => {
-      // Hide buttons + hint
+      // slide to page 2
+      card.classList.add("show-yes");
+
+      // stop interactions on old page
       zone.style.display = "none";
       hint.style.display = "none";
 
-      // Fade out the question title
-      if (questionTitle) questionTitle.classList.add("hide");
-
-      // Show result
-      result.style.display = "block";
-
-      // Start music + confetti
+      // start music first, then confetti slightly later
       resizeConfettiCanvas();
       startYouTubeMusic();
-      setTimeout(() => fullScreenConfetti(), 400);
+      setTimeout(() => fullScreenConfetti(), 420);
     });
   </script>
 </body>
