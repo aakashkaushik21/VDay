@@ -1,4 +1,17 @@
-<!DOCTYPE html>
+yesBtn.addEventListener("click", () => {
+  zone.style.display = "none";
+  hint.style.display = "none";
+
+  // HIDE THE QUESTION TITLE
+  document.getElementById("questionTitle").style.display = "none";
+
+  result.style.display = "block";
+
+  resizeConfettiCanvas();
+
+  startYouTubeMusic();
+  setTimeout(() => fullScreenConfetti(), 400);
+});<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -427,17 +440,21 @@
     });
 
     /* ---------- YES CLICK ---------- */
-    yesBtn.addEventListener("click", () => {
-      zone.style.display = "none";
-      hint.style.display = "none";
-      result.style.display = "block";
+  yesBtn.addEventListener("click", () => {
+  zone.style.display = "none";
+  hint.style.display = "none";
 
-      resizeConfettiCanvas();
+  // HIDE THE QUESTION TITLE
+  document.getElementById("questionTitle").style.display = "none";
 
-      // Start music first (chorus + fade-in), then confetti for drama
-      startYouTubeMusic();
-      setTimeout(() => fullScreenConfetti(), 400);
-    });
+  result.style.display = "block";
+
+  resizeConfettiCanvas();
+
+  startYouTubeMusic();
+  setTimeout(() => fullScreenConfetti(), 400);
+});
   </script>
 </body>
 </html>
+
